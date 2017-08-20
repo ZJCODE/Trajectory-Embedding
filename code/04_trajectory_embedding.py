@@ -46,6 +46,29 @@ def generate_sample(train_data,node_vec_dict):
         for line in train_data:
             yield deal_with_train_data_line(line,node_vec_dict)
 
+def node_vec_mean_of_trajectory(train_data_path,node_vec_dict):
+    train_data = load_train_data(train_data_path,shuffle = False)
+    trajectory_node_vec_mean_matrix = []
+    node_vec_sum = []
+    index_pre = 0
+    for line in train_data:
+        index,node_from_vec,node_to_vec = deal_with_train_data_line(line,node_vec_dict)
+        if index == index_pre:
+            node_vec_sum.append(node_from_vec)
+            node_to_vec_pre = node_to_vec
+            index_pre = index 
+        else:
+            node_vec_sum.append(node_to_vec_pre)
+            trajectory_node_vec_mean_matrix.append(np.array(node_vec_sum).mean(0).tolist())
+            node_vec_sum = [node_from_vec]
+            index_pre = index 
+
+    node_vec_sum.append(node_to_vec_pre)
+    trajectory_node_vec_mean_matrix.append(np.array(node_vec_sum).mean(0).tolist())
+    trajectory_node_vec_mean_matrix = np.array(trajectory_node_vec_mean_matrix)
+    return trajectory_node_vec_mean_matrix
+
+
 def get_batch(iterator,batch_size):
     while True:
         index_batch = []
@@ -175,6 +198,11 @@ def main():
     np.save(trajectory_embedding_matrix_path,trajectory_embedding_matrix)
     np.save(loss_list_path,loss_list)
 
+    trajectory_node_vec_mean_matrix_path = '../data/trajectory_embedding_baseline' \
+                                            + '_node_vec_size_' + str(node_vec_size) \
+                                            + '.npy'
+    trajectory_node_vec_mean_matrix = node_vec_mean_of_trajectory(train_data_path,node_vec_dict)
+    np.save(trajectory_node_vec_mean_matrix_path,trajectory_node_vec_mean_matrix)
 
 if __name__ == '__main__':
     main()
