@@ -198,7 +198,7 @@ def main():
     np.save(trajectory_embedding_matrix_path,trajectory_embedding_matrix)
     np.save(loss_list_path,loss_list)
 
-    trajectory_node_vec_mean_matrix_path = '../data/trajectory_embedding_baseline' \
+    trajectory_node_vec_mean_matrix_path = '../data/trajectory_embedding_matrix_baseline' \
                                             + '_node_vec_size_' + str(node_vec_size) \
                                             + '.npy'
     trajectory_node_vec_mean_matrix = node_vec_mean_of_trajectory(train_data_path,node_vec_dict)
