@@ -113,7 +113,9 @@ data_pair_num = int(os.popen('wc -l ../data/trajectory_node_pair_with_index').re
 print 'all %d train data '%(data_pair_num)
 
 # Coef
-trajectory_embedding_size = input('trajectory_embedding_size : ') #32  # Dimension of the embedding vector.
+# trajectory_embedding_size = input('trajectory_embedding_size : ') #32  # Dimension of the embedding vector.
+trajectory_embedding_size = node_vec_size
+
 learning_rate = input('learning_rate : ') #0.1
 batch_size = input('batch_size : ') #128
 print ' [ skip_step x loss_report_times = %d ] means see all data once'%(data_pair_num/batch_size) 
@@ -160,6 +162,12 @@ def trajectory_embedding_model(batch_gen):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
+        node_vec_dict = load_node_vec_dict(node_vec_path,skip_line = False)
+        trajectory_node_vec_mean_matrix = node_vec_mean_of_trajectory(train_data_path,node_vec_dict)
+
+        # initial trajectory_embedding
+        sess.run(tf.assign(trajectory_embedding, trajectory_node_vec_mean_matrix))
+
         total_loss = 0.0 # we use this to calculate late average loss in the last SKIP_STEP steps
         loss_report_round = 0
         loss_list =[]
@@ -201,6 +209,7 @@ def main():
     trajectory_node_vec_mean_matrix_path = '../data/trajectory_embedding_matrix_baseline' \
                                             + '_node_vec_size_' + str(node_vec_size) \
                                             + '.npy'
+    node_vec_dict = load_node_vec_dict(node_vec_path,skip_line = False)
     trajectory_node_vec_mean_matrix = node_vec_mean_of_trajectory(train_data_path,node_vec_dict)
     np.save(trajectory_node_vec_mean_matrix_path,trajectory_node_vec_mean_matrix)
 
