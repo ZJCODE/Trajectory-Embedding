@@ -26,8 +26,8 @@ desc = path.split('matrix')[1].split('.npy')[0]
 
 trajectory_embedding_matrix = np.load(path)
 
-def max_min_normalization(M):
-    return (M-M.min(1).reshape(-1,1)) / (M.max().reshape(-1,1) - M.min().reshape(-1,1))
+def normalization(M):
+    return (M - M.mean(1).reshape(-1,1)) / M.std(1).reshape(-1,1)
 
 trajectory_embedding_matrix = max_min_normalization(trajectory_embedding_matrix)
 
