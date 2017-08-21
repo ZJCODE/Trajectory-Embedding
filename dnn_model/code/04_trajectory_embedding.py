@@ -86,7 +86,7 @@ def get_batch(iterator,batch_size):
 
 def generate_batch_data(train_data_path,node_vec_path,batch_size):
     train_data = load_train_data(train_data_path,shuffle = True)
-    node_vec_dict = load_node_vec_dict(node_vec_path,skip_line = False,normalize=True):
+    node_vec_dict = load_node_vec_dict(node_vec_path,skip_line = False,normalize=True)
     iterator = generate_sample(train_data,node_vec_dict)
     return get_batch(iterator,batch_size)
 
