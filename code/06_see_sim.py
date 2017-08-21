@@ -32,12 +32,13 @@ trajectorys = data.trajectory
 32 15205
 6 14622
 242 18307 18251
- [27,22052]
+ 27,22052
+ 85,2024
 '''
 
 
 
-node_list =[8,4628]
+node_list =[85,2024]
 for node in node_list:    
     plot_trajectory(eval(trajectorys[node]))
 

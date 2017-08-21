@@ -86,7 +86,7 @@ def get_batch(iterator,batch_size):
 
 def generate_batch_data(train_data_path,node_vec_path,batch_size):
     train_data = load_train_data(train_data_path,shuffle = True)
-    node_vec_dict = load_node_vec_dict(node_vec_path,skip_line = False)
+    node_vec_dict = load_node_vec_dict(node_vec_path,skip_line = False,normalize=True):
     iterator = generate_sample(train_data,node_vec_dict)
     return get_batch(iterator,batch_size)
 
@@ -162,7 +162,7 @@ def trajectory_embedding_model(batch_gen):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
-        node_vec_dict = load_node_vec_dict(node_vec_path,skip_line = False)
+        node_vec_dict = load_node_vec_dict(node_vec_path,skip_line = False,normalize=True)
         trajectory_node_vec_mean_matrix = node_vec_mean_of_trajectory(train_data_path,node_vec_dict)
 
         # initial trajectory_embedding
@@ -194,12 +194,14 @@ def main():
     trajectory_embedding_matrix_path = '../data/trajectory_embedding_matrix' \
                                         + '_embedding_size_' + str(trajectory_embedding_size) \
                                         + '_learning_rate_' + str(learning_rate) \
+                                        + '_batch_size_' + str(batch_size) \
                                         + '_num_train_step_' + str(num_train_step) \
                                         + '_node_vec_size_' + str(node_vec_size) \
                                         + '.npy'
     loss_list_path = '../data/loss_list' \
                     + '_embedding_size_' + str(trajectory_embedding_size) \
                     + '_learning_rate_' + str(learning_rate) \
+                    + '_batch_size_' + str(batch_size) \
                     + '_num_train_step_' + str(num_train_step) \
                     + '_node_vec_size_' + str(node_vec_size) \
                     + '.npy'
