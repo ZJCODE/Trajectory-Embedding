@@ -24,6 +24,10 @@ def load_node_vec_dict(node_vec_path,skip_line = False,normalize=False):
     return node_vec_dict
 
 def load_train_data(train_data_path,time_step_size = 10):
+    '''
+    train_data_path data = [a,b,c,d,e,f] 
+    time_step_size = 3   -> [a,b,c] [b,c,d] [c,d,e] [d,e,f]
+    '''
     train_data = []
     f = open(train_data_path)
     i = 0
@@ -40,67 +44,57 @@ def load_train_data(train_data_path,time_step_size = 10):
             train_data.append(step_list)
     return train_data
 
+
 def deal_with_train_data_line(line,node_vec_dict):
-    line =line.strip()
-    index,nodes = line.split('|')
-    index = int(index)
-    nodes = nodes.split('\t')
-    node_from_vec = node_vec_dict[nodes[0]]
-    node_to_vec = node_vec_dict[nodes[1]]
-    return index,node_from_vec,node_to_vec
+    step_size_index = []
+    step_size_node_vec = []
+    for x in line:
+        node,index = x.split(',')
+        index = int(index)
+        node_vec = node_vec_dict[node]
+        step_size_index.append(index)
+        step_size_node_vec.append(node_vec)
+    return step_size_index,step_size_node_vec
+
+
 
 def generate_sample(train_data,node_vec_dict):
     while True:    
         for line in train_data:
             yield deal_with_train_data_line(line,node_vec_dict)
 
-def node_vec_mean_of_trajectory(train_data_path,node_vec_dict):
-    train_data = load_train_data(train_data_path,shuffle = False)
-    trajectory_node_vec_mean_matrix = []
-    node_vec_sum = []
-    index_pre = 0
-    for line in train_data:
-        index,node_from_vec,node_to_vec = deal_with_train_data_line(line,node_vec_dict)
-        if index == index_pre:
-            node_vec_sum.append(node_from_vec)
-            node_to_vec_pre = node_to_vec
-            index_pre = index 
-        else:
-            node_vec_sum.append(node_to_vec_pre)
-            trajectory_node_vec_mean_matrix.append(np.array(node_vec_sum).mean(0).tolist())
-            node_vec_sum = [node_from_vec]
-            index_pre = index 
-
-    node_vec_sum.append(node_to_vec_pre)
-    trajectory_node_vec_mean_matrix.append(np.array(node_vec_sum).mean(0).tolist())
-    trajectory_node_vec_mean_matrix = np.array(trajectory_node_vec_mean_matrix)
-    return trajectory_node_vec_mean_matrix
-
 
 def get_batch(iterator,batch_size):
     while True:
         index_batch = []
-        node_from_vec_batch = []
-        node_to_vec_batch = []
+        node_vec_batch = []
         for i in range(batch_size):
-            index,node_from_vec,node_to_vec = next(iterator)
+            index,node_vec = next(iterator)
             index_batch.append(index)
-            node_from_vec_batch.append(node_from_vec)
-            node_to_vec_batch.append(node_to_vec)
+            node_vec_batch.append(node_vec)
         index_batch = np.array(index_batch)
-        node_from_vec_batch = np.array(node_from_vec_batch)
-        node_to_vec_batch = np.array(node_to_vec_batch)
-        yield index_batch,node_from_vec_batch,node_to_vec_batch
+        node_vec_batch = np.array(node_vec_batch)
+        yield index_batch,node_vec_batch
 
-def generate_batch_data(train_data_path,node_vec_path,batch_size):
-    train_data = load_train_data(train_data_path,shuffle = True)
+def generate_batch_data(train_data_path,node_vec_path,batch_size,time_step_size):
+    train_data = load_train_data(train_data_path,time_step_size)
     node_vec_dict = load_node_vec_dict(node_vec_path,skip_line = False,normalize=True)
     iterator = generate_sample(train_data,node_vec_dict)
     return get_batch(iterator,batch_size)
 
 
+# To be modified :
+
+def node_vec_mean_of_trajectory(train_data_path,node_vec_dict):
+    pass
+    # To be modified :
+    trajectory_node_vec_mean_matrix = np.array(trajectory_node_vec_mean_matrix)
+    return trajectory_node_vec_mean_matrix
+
+
+
 # train_data
-train_data_path = '../data/trajectory_node_pair_with_index'
+train_data_path = '../data/trajectory_sequence'
 
 # node vector
 node_vec_path_list = glob.glob('../data/trajectory_node_vec_order_combine_dim*')
