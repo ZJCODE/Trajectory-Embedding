@@ -29,7 +29,7 @@ trajectory_embedding_matrix = np.load(path)
 def normalization(M):
     return (M - M.mean(1).reshape(-1,1)) / M.std(1).reshape(-1,1)
 
-trajectory_embedding_matrix = max_min_normalization(trajectory_embedding_matrix)
+trajectory_embedding_matrix = normalization(trajectory_embedding_matrix)
 
 
 print 'calculate similarity matrix'
