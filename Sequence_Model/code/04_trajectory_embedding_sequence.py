@@ -160,19 +160,29 @@ def trajectory_embedding_seq_model(batch_gen):
         except:
             node_trajectory_vec = tf.concat(2,[node_vec_seq,trajectory_index_embed],name = 'node_trajectory_vec')
 
-    # node_trajectory_vec  : (batch_size, time_step_size, input_vec_size)
+
+    node_vec_seq_T = tf.transpose(node_vec_seq,[1,0,2])
+    node_vec_seq_R = tf.reshape(node_vec_seq_T, [-1,node_vec_size])
+    node_vec_seq_split = tf.split(node_vec_seq_R, time_step_size, 0)
+
+
+    # node_trajectory_vec  : (batch_size, time_step_size, vec_size)
     vec_size = int(node_trajectory_vec.get_shape()[2])
     lstm_input_T = tf.transpose(node_trajectory_vec,[1,0,2])
     lstm_input_R = tf.reshape(lstm_input_T, [-1,vec_size])
+    # lstm_input : [(batch_size, vec_size),(batch_size, vec_size)...] , length is time_step_size
     lstm_input = tf.split(lstm_input_R, time_step_size, 0)
-    # lstm_input : [(batch_size, input_vec_size),(batch_size, input_vec_size)...]
+    
 
-    lstm_size = vec_size
+    lstm_size = node_vec_size
 
     lstm = rnn.BasicLSTMCell(lstm_size, forget_bias=1.0, state_is_tuple=True)
+    # lstm_output : [(batch_size, lstm_size),(batch_size, lstm_size)...] , length is time_step_size
     lstm_output, _states = rnn.static_rnn(lstm, lstm_input, dtype=tf.float32)
-
-
+    
+    # pos1 + index_pos1 -> result  | min dist(result , pos2)
+    loss = tf.reduce_mean(tf.square(tf.subtract(node_vec_seq_split[1:],lstm_output[:-1])))
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
 
 
