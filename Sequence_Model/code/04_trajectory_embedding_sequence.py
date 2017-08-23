@@ -1,5 +1,6 @@
 import tensorflow as tf 
 from tensorflow.contrib.layers import fully_connected,layer_norm
+from tensorflow.contrib import rnn
 import numpy as np
 import glob
 import os
@@ -42,7 +43,7 @@ def load_train_data(train_data_path,time_step_size = 10):
         else:
             step_list = step_list[1:]+[line.strip()]
             train_data.append(step_list)
-    return train_data
+    return train_data # each element in the train_data list is a sequence who's length is time_step_size
 
 
 def deal_with_train_data_line(line,node_vec_dict):
@@ -104,7 +105,6 @@ def node_vec_mean_of_trajectory(train_data_path,node_vec_dict):
 
 # To be modified :
 
-
 # train_data
 train_data_path = '../data/trajectory_sequence'
 
@@ -120,30 +120,62 @@ node_vec_size =  int(node_vec_path.split('dim_')[1])*2
 print 'node vector dim is : %d'%(node_vec_size)
 
 
+
 # get num of trajectory and train data pairs 
 trajectory_num = int(os.popen('wc -l ../data/trajectory').readline().split(' ')[0])
 print 'all %d trajectorys '%(trajectory_num) 
-data_pair_num = int(os.popen('wc -l ../data/trajectory_node_pair_with_index').readline().split(' ')[0])
-print 'all %d train data '%(data_pair_num)
+
+
 
 # Coef
 # trajectory_embedding_size = input('trajectory_embedding_size : ') #32  # Dimension of the embedding vector.
 trajectory_embedding_size = node_vec_size
 
 learning_rate = input('learning_rate : ') #0.1
-batch_size = input('batch_size : ') #128
-print ' [ skip_step x loss_report_times = %d ] means see all data once'%(data_pair_num/batch_size) 
+batch_size = input('batch_size : ') #128 
+time_step_size =  input('time_step_size : ')
+
+
 skip_step = input('skip_step (how many steps to skip before reporting the loss) : ')  # how many steps to skip before reporting the loss
 loss_report_times = input('loss_report_times : ')
 num_train_step = skip_step * loss_report_times
 
 
 
+def trajectory_embedding_seq_model(batch_gen):
+
+    with tf.variable_scope("input"):
+
+        trajectory_index = tf.placeholder(tf.int32, shape=[batch_size,time_step_size],name = 'trajectory_index')
+        node_vec_seq = tf.placeholder(tf.float32, shape=[batch_size,time_step_size,node_vec_size],name = 'node_inputs')
+
+    with tf.variable_scope("embedding"):
+        trajectory_embedding = tf.Variable(tf.random_uniform([trajectory_num, trajectory_embedding_size], -1.0, 1.0),name = 'trajectory_embedding')
+        trajectory_index_embed = tf.nn.embedding_lookup(trajectory_embedding, trajectory_index)
 
 
-def trajectory_embedding_seq_model(lstm_size,batch_gen):
+    with tf.variable_scope("concat"):
+        try:
+            node_trajectory_vec = tf.concat([node_vec_seq,trajectory_index_embed],2,name = 'node_trajectory_vec')
+        except:
+            node_trajectory_vec = tf.concat(2,[node_vec_seq,trajectory_index_embed],name = 'node_trajectory_vec')
 
-    pass
+    # node_trajectory_vec  : (batch_size, time_step_size, input_vec_size)
+    vec_size = int(node_trajectory_vec.get_shape()[2])
+    lstm_input_T = tf.transpose(node_trajectory_vec,[1,0,2])
+    lstm_input_R = tf.reshape(lstm_input_T, [-1,vec_size])
+    lstm_input = tf.split(lstm_input_R, time_step_size, 0)
+    # lstm_input : [(batch_size, input_vec_size),(batch_size, input_vec_size)...]
+
+    lstm_size = vec_size
+
+    lstm = rnn.BasicLSTMCell(lstm_size, forget_bias=1.0, state_is_tuple=True)
+    lstm_output, _states = rnn.static_rnn(lstm, lstm_input, dtype=tf.float32)
+
+
+
+
+
 
 
 #  Model
@@ -210,7 +242,9 @@ def trajectory_embedding_model(batch_gen):
 
 
 def main():
-    batch_gen = generate_batch_data(train_data_path,node_vec_path,batch_size)
+
+    batch_gen = generate_batch_data(train_data_path,node_vec_path,batch_size,time_step_size)
+
     trajectory_embedding_matrix,loss_list = trajectory_embedding_model(batch_gen)
     trajectory_embedding_matrix_path = '../data/trajectory_embedding_matrix' \
                                         + '_embedding_size_' + str(trajectory_embedding_size) \
