@@ -11,7 +11,7 @@ def deal_with_node_vec_line(line,normalize = False):
     node = line_split[0]
     vec  = np.array(map(float,line_split[1:]))
     if normalize:
-        vec = vec - vec.min() / (vec.max() - vec.min())
+        vec = (vec - vec.mean()) / vec.std()
     return node,vec.tolist()
 
 def load_node_vec_dict(node_vec_path,skip_line = False,normalize=False):
@@ -103,8 +103,6 @@ def node_vec_mean_of_trajectory(train_data_path,node_vec_dict):
     trajectory_node_vec_mean_matrix = np.array(trajectory_node_vec_mean_matrix)
     return trajectory_node_vec_mean_matrix
 
-# To be modified :
-
 # train_data
 train_data_path = '../data/trajectory_sequence'
 
@@ -119,13 +117,9 @@ node_vec_path = node_vec_path_list[num]
 node_vec_size =  int(node_vec_path.split('dim_')[1])*2
 print 'node vector dim is : %d'%(node_vec_size)
 
-
-
 # get num of trajectory and train data pairs 
 trajectory_num = int(os.popen('wc -l ../data/trajectory').readline().split(' ')[0])
 print 'all %d trajectorys '%(trajectory_num) 
-
-
 
 # Coef
 # trajectory_embedding_size = input('trajectory_embedding_size : ') #32  # Dimension of the embedding vector.
@@ -184,44 +178,6 @@ def trajectory_embedding_seq_model(batch_gen):
     loss = tf.reduce_mean(tf.square(tf.subtract(node_vec_seq_split[1:],lstm_output[:-1])))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
-
-
-
-
-#  Model
-
-def trajectory_embedding_model(batch_gen):
-
-    with tf.variable_scope("input"):
-
-        trajectory_index = tf.placeholder(tf.int32, shape=[batch_size],name = 'trajectory_index')
-        node_vec_input = tf.placeholder(tf.float32, shape=[batch_size,node_vec_size],name = 'node_inputs')
-        node_predict = tf.placeholder(tf.float32, shape=[batch_size, node_vec_size],name = 'node_predict')
-
-    with tf.variable_scope("embedding"):
-        trajectory_embedding = tf.Variable(tf.random_uniform([trajectory_num, trajectory_embedding_size], -1.0, 1.0),name = 'trajectory_embedding')
-        trajectory_index_embed = tf.nn.embedding_lookup(trajectory_embedding, trajectory_index)
-
-    with tf.variable_scope("concat"):
-        try:
-            node_trajectory_vec = tf.concat([node_vec_input,trajectory_index_embed],1,name = 'node_trajectory_vec')
-        except:
-            node_trajectory_vec = tf.concat(1 ,[node_vec_input,trajectory_index_embed],name = 'node_trajectory_vec')
-
-
-    with tf.variable_scope("nn"):
-        fc1 = fully_connected(node_trajectory_vec , num_outputs = (trajectory_embedding_size + node_vec_size))
-        fc1_norm = layer_norm(fc1)
-        fc2 = fully_connected(fc1_norm , num_outputs = (trajectory_embedding_size + node_vec_size) / 2)
-        fc2_norm = layer_norm(fc2)
-        result = fully_connected(fc2_norm , num_outputs = node_vec_size)
-
-    #loss = tf.nn.l2_loss(node_predict - result,name = 'l2_loss')
-    loss = tf.reduce_mean(tf.square(node_predict-result))
-
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
-
-
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
@@ -235,9 +191,9 @@ def trajectory_embedding_model(batch_gen):
         loss_report_round = 0
         loss_list =[]
         for num in range(num_train_step):
-            index,node_from_vec,node_to_vec = next(batch_gen)
+            index_batch,node_vec_batch = next(batch_gen)
             loss_batch, _ = sess.run([loss, optimizer], 
-                                        feed_dict={trajectory_index: index, node_vec_input:node_from_vec, node_predict:node_to_vec})
+                                        feed_dict={trajectory_index: index_batch, node_vec_seq:node_vec_batch})
             total_loss += loss_batch
 
             if (num + 1) % skip_step == 0:
@@ -251,12 +207,14 @@ def trajectory_embedding_model(batch_gen):
     return trajectory_embedding_matrix,loss_list
 
 
+
 def main():
 
     batch_gen = generate_batch_data(train_data_path,node_vec_path,batch_size,time_step_size)
 
     trajectory_embedding_matrix,loss_list = trajectory_embedding_model(batch_gen)
     trajectory_embedding_matrix_path = '../data/trajectory_embedding_matrix' \
+                                        + '_time_step_size_' +str(time_step_size) \
                                         + '_embedding_size_' + str(trajectory_embedding_size) \
                                         + '_learning_rate_' + str(learning_rate) \
                                         + '_batch_size_' + str(batch_size) \
@@ -264,6 +222,7 @@ def main():
                                         + '_node_vec_size_' + str(node_vec_size) \
                                         + '.npy'
     loss_list_path = '../data/loss_list' \
+                    + '_time_step_size_' +str(time_step_size) \
                     + '_embedding_size_' + str(trajectory_embedding_size) \
                     + '_learning_rate_' + str(learning_rate) \
                     + '_batch_size_' + str(batch_size) \
