@@ -105,7 +105,6 @@ def node_vec_mean_of_trajectory(train_data_path,node_vec_dict):
 
 # train_data
 train_data_path = '../data/trajectory_sequence'
-
 # node vector
 node_vec_path_list = glob.glob('../data/trajectory_node_vec_order_combine_dim*')
 zip_path = zip(range(len(node_vec_path_list)),node_vec_path_list)
@@ -116,20 +115,16 @@ num = input('choose which one to use [Enter the num] : ')
 node_vec_path = node_vec_path_list[num]
 node_vec_size =  int(node_vec_path.split('dim_')[1])*2
 print 'node vector dim is : %d'%(node_vec_size)
-
 # get num of trajectory and train data pairs 
 trajectory_num = int(os.popen('wc -l ../data/trajectory').readline().split(' ')[0])
 print 'all %d trajectorys '%(trajectory_num) 
 
-# Coef
-# trajectory_embedding_size = input('trajectory_embedding_size : ') #32  # Dimension of the embedding vector.
-trajectory_embedding_size = node_vec_size
 
+# Coef
+trajectory_embedding_size = node_vec_size
 learning_rate = input('learning_rate : ') #0.1
 batch_size = input('batch_size : ') #128 
 time_step_size =  input('time_step_size : ')
-
-
 skip_step = input('skip_step (how many steps to skip before reporting the loss) : ')  # how many steps to skip before reporting the loss
 loss_report_times = input('loss_report_times : ')
 num_train_step = skip_step * loss_report_times
