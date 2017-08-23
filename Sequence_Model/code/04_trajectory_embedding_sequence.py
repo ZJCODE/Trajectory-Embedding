@@ -83,14 +83,26 @@ def generate_batch_data(train_data_path,node_vec_path,batch_size,time_step_size)
     return get_batch(iterator,batch_size)
 
 
-# To be modified :
-
 def node_vec_mean_of_trajectory(train_data_path,node_vec_dict):
-    pass
-    # To be modified :
+    trajectory_node_vec_mean_matrix = []
+    node_vec_sum = [] 
+    index_pre = '0'
+    f = open(train_data_path,'r')
+    for line in f.readlines():
+        node,index = line.strip().split(',')
+        node_vec = node_vec_dict[node]
+        if index == index_pre:
+            node_vec_sum.append(node_vec)
+        else:
+            node_vec_sum = [node_vec]
+            trajectory_node_vec_mean_matrix.append(np.array(node_vec_sum).mean(0).tolist())
+        index_pre = index
+    trajectory_node_vec_mean_matrix.append(np.array(node_vec_sum).mean(0).tolist())
+
     trajectory_node_vec_mean_matrix = np.array(trajectory_node_vec_mean_matrix)
     return trajectory_node_vec_mean_matrix
 
+# To be modified :
 
 
 # train_data
