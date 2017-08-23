@@ -212,7 +212,7 @@ def main():
 
     batch_gen = generate_batch_data(train_data_path,node_vec_path,batch_size,time_step_size)
 
-    trajectory_embedding_matrix,loss_list = trajectory_embedding_model(batch_gen)
+    trajectory_embedding_matrix,loss_list = trajectory_embedding_seq_model(batch_gen)
     trajectory_embedding_matrix_path = '../data/trajectory_embedding_matrix' \
                                         + '_time_step_size_' +str(time_step_size) \
                                         + '_embedding_size_' + str(trajectory_embedding_size) \
