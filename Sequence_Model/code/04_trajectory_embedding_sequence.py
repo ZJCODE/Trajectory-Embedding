@@ -198,6 +198,10 @@ def trajectory_embedding_seq_model(batch_gen):
         loss_report_round = 0
         loss_list =[]
         for num in range(num_train_step):
+
+            # set trajectory_node_vec_mean_matrix still during the pretrain of lstm's coef
+            if num < num_train_step/2:
+                sess.run(tf.assign(trajectory_embedding, trajectory_node_vec_mean_matrix))
             index_batch,node_vec_batch = next(batch_gen)
             loss_batch, _ = sess.run([loss, optimizer], 
                                         feed_dict={trajectory_index: index_batch, node_vec_seq:node_vec_batch})
@@ -206,6 +210,7 @@ def trajectory_embedding_seq_model(batch_gen):
             if (num + 1) % skip_step == 0:
                 loss_report_round += 1
                 print('Average loss at loss_report_round {}: {:5.5f}'.format(loss_report_round, total_loss * 1.0 / skip_step))
+                print sess.run(trajectory_embedding)[0,:]
                 loss_list.append(total_loss * 1.0 / skip_step)
                 total_loss = 0.0
 
