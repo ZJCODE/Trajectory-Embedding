@@ -169,12 +169,20 @@ def trajectory_embedding_seq_model(batch_gen):
     
     lstm_size = node_vec_size
 
+    #------- drietion : go ahead -------
+
     lstm = rnn.BasicLSTMCell(lstm_size, forget_bias=1.0, state_is_tuple=True)
     # lstm_output : [(batch_size, lstm_size),(batch_size, lstm_size)...] , length is time_step_size
     lstm_output, _states = rnn.static_rnn(lstm, lstm_input, dtype=tf.float32)
     
+    ##------- drietion : go back -------
+
+    node_vec_seq_split_inverse = node_vec_seq_split[::-1]
+    lstm_input_inverse = lstm_input[::-1]
+    lstm_output_inverse, _states_inverse = rnn.static_rnn(lstm, lstm_input_inverse, dtype=tf.float32)
+
     # pos1 + index_pos1 -> result  | min dist(result , pos2)
-    loss = tf.reduce_mean(tf.square(tf.subtract(node_vec_seq_split[1:],lstm_output[:-1])))
+    loss = tf.reduce_mean(tf.square(tf.subtract(node_vec_seq_split[1:],lstm_output[:-1]))) + tf.reduce_mean(tf.square(tf.subtract(node_vec_seq_split_inverse[1:],lstm_output_inverse[:-1])))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
     with tf.Session() as sess:
