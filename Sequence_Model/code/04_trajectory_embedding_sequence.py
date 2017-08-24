@@ -95,8 +95,8 @@ def node_vec_mean_of_trajectory(train_data_path,node_vec_dict):
         if index == index_pre:
             node_vec_sum.append(node_vec)
         else:
-            node_vec_sum = [node_vec]
             trajectory_node_vec_mean_matrix.append(np.array(node_vec_sum).mean(0).tolist())
+            node_vec_sum = [node_vec]
         index_pre = index
     trajectory_node_vec_mean_matrix.append(np.array(node_vec_sum).mean(0).tolist())
 
@@ -162,7 +162,6 @@ def trajectory_embedding_seq_model(batch_gen):
     # lstm_input : [(batch_size, vec_size),(batch_size, vec_size)...] , length is time_step_size
     lstm_input = tf.split(lstm_input_R, time_step_size, 0)
     
-
     lstm_size = node_vec_size
 
     lstm = rnn.BasicLSTMCell(lstm_size, forget_bias=1.0, state_is_tuple=True)
