@@ -128,8 +128,8 @@ time_step_size =  input('time_step_size : ')
 skip_step = input('skip_step (how many steps to skip before reporting the loss) : ')  # how many steps to skip before reporting the loss
 loss_report_times = input('loss_report_times : ')
 num_train_step = skip_step * loss_report_times
-
-
+combine_type = input('combine_type [ 0 : concat / 1 : element_wise_multiply ] : ')
+combine_type_dict = {0:'concat',1:'element_wise_multiply'}
 
 def trajectory_embedding_seq_model(batch_gen):
 
@@ -143,11 +143,16 @@ def trajectory_embedding_seq_model(batch_gen):
         trajectory_index_embed = tf.nn.embedding_lookup(trajectory_embedding, trajectory_index)
 
 
-    with tf.variable_scope("concat"):
-        try:
-            node_trajectory_vec = tf.concat([node_vec_seq,trajectory_index_embed],2,name = 'node_trajectory_vec')
-        except:
-            node_trajectory_vec = tf.concat(2,[node_vec_seq,trajectory_index_embed],name = 'node_trajectory_vec')
+
+    with tf.variable_scope("combine"):
+
+        if combine_type == 0:
+            try:
+                node_trajectory_vec = tf.concat([node_vec_seq,trajectory_index_embed],2,name = 'node_trajectory_vec')
+            except:
+                node_trajectory_vec = tf.concat(2,[node_vec_seq,trajectory_index_embed],name = 'node_trajectory_vec')
+        elif combine_type == 1:
+            node_trajectory_vec = tf.multiply(node_vec_seq,trajectory_index_embed,name = 'node_trajectory_vec')
 
 
     node_vec_seq_T = tf.transpose(node_vec_seq,[1,0,2])
@@ -214,6 +219,7 @@ def main():
                                         + '_batch_size_' + str(batch_size) \
                                         + '_num_train_step_' + str(num_train_step) \
                                         + '_node_vec_size_' + str(node_vec_size) \
+                                        + '_combine_type_' + combine_type_dict[combine_type] \
                                         + '.npy'
     loss_list_path = '../data/loss_list' \
                     + '_time_step_size_' +str(time_step_size) \
@@ -222,6 +228,7 @@ def main():
                     + '_batch_size_' + str(batch_size) \
                     + '_num_train_step_' + str(num_train_step) \
                     + '_node_vec_size_' + str(node_vec_size) \
+                    + '_combine_type_' + combine_type_dict[combine_type] \
                     + '.npy'
     np.save(trajectory_embedding_matrix_path,trajectory_embedding_matrix)
     np.save(loss_list_path,loss_list)
