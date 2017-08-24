@@ -29,7 +29,10 @@ trajectory_embedding_matrix = np.load(path)
 def normalization(M):
     return (M - M.mean(1).reshape(-1,1)) / M.std(1).reshape(-1,1)
 
-trajectory_embedding_matrix = normalization(trajectory_embedding_matrix)
+normalization_or_not = 'normalization or not [0:no,1:yes] : '
+
+if normalization_or_not:
+    trajectory_embedding_matrix = normalization(trajectory_embedding_matrix)
 
 
 print 'calculate similarity matrix'
@@ -40,17 +43,39 @@ trajectory_sim_order_index = trajectory_sim.argsort()[:,::-1]
 
 trajectory_sim_result_path = '../data/trajectory_sim_result' + desc
 
-sim_filter_threshold = input('sim_filter_threshold : ') #0.9
+threshold_filter_or_top_n = input('threshold_filter_or_top_n ? [0 :threshold_filter , 1 : top_n] ')
 
-f = open(trajectory_sim_result_path,'w')
+if threshold_filter_or_top_n == 0:
+    trajectory_sim_result_path += 'threshold_filter'
+    sim_filter_threshold = input('sim_filter_threshold : ') #0.9
 
-for sim_order_index ,sim  in zip(trajectory_sim_order_index,trajectory_sim):
-    sim = sim[sim_order_index]
-    sim_order_index = sim_order_index[sim > sim_filter_threshold]
-    sim = [round(x,3) for x in sim[sim > sim_filter_threshold]]
-    zip_index_sim = zip(sim_order_index,sim)
-    line = str(sim_order_index[0]) + '\t' + '\t'.join(map(str,zip_index_sim[1:])) + '\n'
-    print line
-    f.write(line)
-f.close()
+    f = open(trajectory_sim_result_path,'w')
+
+    for sim_order_index ,sim  in zip(trajectory_sim_order_index,trajectory_sim):
+        sim = sim[sim_order_index]
+        sim_order_index = sim_order_index[sim > sim_filter_threshold]
+        sim = [round(x,3) for x in sim[sim > sim_filter_threshold]]
+        zip_index_sim = zip(sim_order_index,sim)
+        line = str(sim_order_index[0]) + '\t' + '\t'.join(map(str,zip_index_sim[1:])) + '\n'
+        #print line
+        f.write(line)
+    f.close()
+
+if threshold_filter_or_top_n == 1:
+    top_n = input('top n  : ') #0.9
+    trajectory_sim_result_path += 'top_' + str(top_n)
+    f = open(trajectory_sim_result_path,'w')
+
+    for sim_order_index ,sim  in zip(trajectory_sim_order_index,trajectory_sim):
+        sim = sim[sim_order_index]
+        sim_order_index = sim_order_index[:top_n]
+        sim = [round(x,3) for x in sim[:top_n]]
+        zip_index_sim = zip(sim_order_index,sim)
+        line = str(sim_order_index[0]) + '\t' + '\t'.join(map(str,zip_index_sim[1:])) + '\n'
+        #print line
+        f.write(line)
+    f.close()
+
+
+
 
