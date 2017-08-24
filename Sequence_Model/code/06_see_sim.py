@@ -40,45 +40,59 @@ trajectorys = data.trajectory
 '''
 
 
-sim_base_f = open('../data/trajectory_sim_result_baseline_node_vec_size_16','r')
-sim_embedding_f = open('../data/trajectory_sim_result_time_step_size_10_embedding_size_16_learning_rate_0.01_batch_size_512_num_train_step_100000_node_vec_size_16_combine_type_element_wise_multiply','r')
+sim_base_f = open('../data/trajectory_sim_result_baseline_node_vec_size_16_top_5','r')
+sim_embedding_f = open('../data/trajectory_sim_result_time_step_size_10_embedding_size_16_learning_rate_0.01_batch_size_512_num_train_step_100000_node_vec_size_16_combine_type_element_wise_multiply_top_5','r')
 
 def deal_sim_line(line):
     split_line = line.strip().split('\t')
     trajectory_num = eval(split_line[0])
     if len(split_line) > 1:
         sim_trajectory_num_list = [eval(x)[0] for x in split_line[1:]]
+        sim_v_trajectory_num_list = [eval(x)[1] for x in split_line[1:]]
     else:
         sim_trajectory_num_list = []
+        sim_v_trajectory_num_list = []
         
     sim_trajectory_num_list = [trajectory_num] + sim_trajectory_num_list
     
-    return sim_trajectory_num_list
+    return sim_trajectory_num_list,sim_v_trajectory_num_list
 
 
 sim_base_matrix = []
+sim_base_matrix_v = []
 for line in sim_base_f.readlines():
-    sim_base_matrix.append(deal_sim_line(line))
+    n,v = deal_sim_line(line)
+    sim_base_matrix.append(n)
+    sim_base_matrix_v.append(v)
 
 sim_embedding_matrix = []
+sim_embedding_matrix_v = []
 for line in sim_embedding_f.readlines():
-    sim_embedding_matrix.append(deal_sim_line(line))
+    n,v = deal_sim_line(line)
+    sim_embedding_matrix.append(n)
+    sim_embedding_matrix_v.append(v)
 
+459
 
 def plot_look(n):
     node_list = sim_base_matrix[n]
+    node_list_sim_v = sim_base_matrix_v[n]
     plot_trajectory(eval(trajectorys[node_list[0]]))
+    print len(eval(trajectorys[node_list[0]]))
+    print '----------'
     plt.legend('1')
-    for node in node_list[1:]:    
+    for node,sim_v in zip(node_list[1:],node_list_sim_v):    
         plot_trajectory(eval(trajectorys[node]))
-        #print len(eval(trajectorys[node]))
+        print len(eval(trajectorys[node])) , sim_v
     
     plt.figure()
+    print '----------'
     
     node_list = sim_embedding_matrix[n]
+    node_list_sim_v = sim_embedding_matrix_v[n]
     plot_trajectory(eval(trajectorys[node_list[0]]))
     plt.legend('1')
-    for node in node_list[1:]:    
+    for node,sim_v in zip(node_list[1:],node_list_sim_v):    
         plot_trajectory(eval(trajectorys[node]))
-        #print len(eval(trajectorys[node]))
+        print len(eval(trajectorys[node])) ,sim_v
 

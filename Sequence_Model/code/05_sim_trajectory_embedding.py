@@ -46,8 +46,8 @@ trajectory_sim_result_path = '../data/trajectory_sim_result' + desc
 threshold_filter_or_top_n = input('threshold_filter_or_top_n ? [0 :threshold_filter , 1 : top_n] ')
 
 if threshold_filter_or_top_n == 0:
-    trajectory_sim_result_path += 'threshold_filter'
     sim_filter_threshold = input('sim_filter_threshold : ') #0.9
+    trajectory_sim_result_path += '_threshold_filter_' +str(sim_filter_threshold)
 
     f = open(trajectory_sim_result_path,'w')
 
@@ -63,7 +63,7 @@ if threshold_filter_or_top_n == 0:
 
 if threshold_filter_or_top_n == 1:
     top_n = input('top n  : ') #0.9
-    trajectory_sim_result_path += 'top_' + str(top_n)
+    trajectory_sim_result_path += '_top_' + str(top_n)
     f = open(trajectory_sim_result_path,'w')
 
     for sim_order_index ,sim  in zip(trajectory_sim_order_index,trajectory_sim):
