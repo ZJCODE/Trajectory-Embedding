@@ -200,8 +200,9 @@ def trajectory_embedding_seq_model(batch_gen):
         for num in range(num_train_step):
 
             # set trajectory_node_vec_mean_matrix still during the pretrain of lstm's coef
-            if num < num_train_step/2:
+            if num < 10 :
                 sess.run(tf.assign(trajectory_embedding, trajectory_node_vec_mean_matrix))
+
             index_batch,node_vec_batch = next(batch_gen)
             loss_batch, _ = sess.run([loss, optimizer], 
                                         feed_dict={trajectory_index: index_batch, node_vec_seq:node_vec_batch})
