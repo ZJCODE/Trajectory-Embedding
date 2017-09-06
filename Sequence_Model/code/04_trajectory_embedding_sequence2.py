@@ -60,7 +60,8 @@ def deal_with_train_data_line(line,node_vec_dict):
 
 
 def generate_sample(train_data,node_vec_dict):
-    while True:    
+    while True:
+        np.random.shuffle(train_data)
         for line in train_data:
             yield deal_with_train_data_line(line,node_vec_dict)
 
@@ -154,7 +155,6 @@ def trajectory_embedding_seq_model(batch_gen):
         elif combine_type == 1:
             node_trajectory_vec = tf.multiply(node_vec_seq,trajectory_index_embed,name = 'node_trajectory_vec')
 
-
     node_vec_seq_T = tf.transpose(node_vec_seq,[1,0,2])
     node_vec_seq_R = tf.reshape(node_vec_seq_T, [-1,node_vec_size])
     node_vec_seq_split = tf.split(node_vec_seq_R, time_step_size, 0)
@@ -174,12 +174,29 @@ def trajectory_embedding_seq_model(batch_gen):
     lstm = rnn.BasicLSTMCell(lstm_size, forget_bias=1.0, state_is_tuple=True)
     # lstm_output : [(batch_size, lstm_size),(batch_size, lstm_size)...] , length is time_step_size
     lstm_output, _states = rnn.static_rnn(lstm, lstm_input, dtype=tf.float32)
-    
+
+
+    trajectory_index_embed_T = tf.transpose(trajectory_index_embed,[1,0,2])
+    trajectory_index_embed_R = tf.reshape(trajectory_index_embed_T, [-1,trajectory_embedding_size])
+    trajectory_index_embed_split = tf.split(trajectory_index_embed_R, time_step_size, 0)
+
+    lstm_output_ = tf.concat([lstm_output,trajectory_index_embed_split],2)
+    lstm_output_ = tf.contrib.layers.fully_connected(lstm_output_,node_vec_size*2,activation_fn=tf.nn.tanh)
+    lstm_output_ = tf.contrib.layers.fully_connected(lstm_output_,node_vec_size,activation_fn=tf.nn.tanh)
+    lstm_output = tf.add(lstm_output,lstm_output_)
+    lstm_output = tf.contrib.layers.fully_connected(lstm_output,node_vec_size,activation_fn=tf.nn.tanh)
+
     ##------- drietion : go back -------
 
     node_vec_seq_split_inverse = node_vec_seq_split[::-1]
     lstm_input_inverse = lstm_input[::-1]
     lstm_output_inverse, _states_inverse = rnn.static_rnn(lstm, lstm_input_inverse, dtype=tf.float32)
+
+    lstm_output_inverse_ = tf.concat([lstm_output_inverse,trajectory_index_embed_split],2)
+    lstm_output_inverse_ = tf.contrib.layers.fully_connected(lstm_output_inverse_,2*node_vec_size,activation_fn=tf.nn.tanh)
+    lstm_output_inverse_ = tf.contrib.layers.fully_connected(lstm_output_inverse_,node_vec_size,activation_fn=tf.nn.tanh)
+    lstm_output_inverse = tf.add(lstm_output_inverse,lstm_output_inverse_)
+    lstm_output_inverse = tf.contrib.layers.fully_connected(lstm_output_inverse,node_vec_size,activation_fn=tf.nn.tanh)
 
     # pos1 + index_pos1 -> result  | min dist(result , pos2)
     loss = tf.reduce_mean(tf.square(tf.subtract(node_vec_seq_split[1:],lstm_output[:-1]))) + tf.reduce_mean(tf.square(tf.subtract(node_vec_seq_split_inverse[1:],lstm_output_inverse[:-1])))

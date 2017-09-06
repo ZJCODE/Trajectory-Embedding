@@ -11,7 +11,7 @@ def combine_order_1_2(order_1_file,order_2_file):
     f1 = open(order_1_file,'r')
     f2 = open(order_2_file,'r')
 
-    combine_file_name = order_1_file.split('_1_')[0]+'_combine_' + order_1_file.split('_1_')[1]
+    combine_file_name = order_1_file.split('_1_')[0]+'_combine_dim_' + str(2*int(order_1_file.split('_1_dim_')[1]))
 
     f3 = open(combine_file_name,'w')
 
