@@ -9,6 +9,15 @@ def cos_sim(X):
     cos_similarity = dot/nn
     return cos_similarity
 
+
+def mse(X):
+    sim = np.zeros([X.shape[0],X.shape[0]])
+    for i in range(len(X)):
+        if i % 100 == 0:
+            print 'process %d'%(i)
+        sim[i,:] = -np.mean(np.square(X[i,:]-X),1)
+    return sim
+
 trajectory_embedding_matrix_path = glob.glob('../data/trajectory_embedding_matrix*')
 
 print 'we have those embedding_matrix '
@@ -36,7 +45,9 @@ if normalization_or_not:
 
 
 print 'calculate similarity matrix'
-trajectory_sim = cos_sim(trajectory_embedding_matrix)
+#trajectory_sim = cos_sim(trajectory_embedding_matrix)
+trajectory_sim = mse(trajectory_embedding_matrix)
+
 print 'sort similarity matrix'
 trajectory_sim_order_index = trajectory_sim.argsort()[:,::-1]
 

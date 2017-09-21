@@ -61,6 +61,7 @@ def deal_with_train_data_line(line,node_vec_dict):
 
 def generate_sample(train_data,node_vec_dict):
     while True:
+        print '-----shuffle data-----'
         np.random.shuffle(train_data)
         for line in train_data:
             yield deal_with_train_data_line(line,node_vec_dict)
@@ -185,6 +186,8 @@ def trajectory_embedding_seq_model(batch_gen):
     lstm_output_ = tf.contrib.layers.fully_connected(lstm_output_,node_vec_size,activation_fn=tf.nn.tanh)
     lstm_output = tf.add(lstm_output,lstm_output_)
     lstm_output = tf.contrib.layers.fully_connected(lstm_output,node_vec_size,activation_fn=tf.nn.tanh)
+    lstm_output = tf.contrib.layers.fully_connected(lstm_output,node_vec_size,activation_fn=tf.nn.tanh)
+    lstm_output = tf.contrib.layers.fully_connected(lstm_output,node_vec_size,activation_fn=None)
 
     ##------- drietion : go back -------
 
@@ -197,6 +200,8 @@ def trajectory_embedding_seq_model(batch_gen):
     lstm_output_inverse_ = tf.contrib.layers.fully_connected(lstm_output_inverse_,node_vec_size,activation_fn=tf.nn.tanh)
     lstm_output_inverse = tf.add(lstm_output_inverse,lstm_output_inverse_)
     lstm_output_inverse = tf.contrib.layers.fully_connected(lstm_output_inverse,node_vec_size,activation_fn=tf.nn.tanh)
+    lstm_output_inverse = tf.contrib.layers.fully_connected(lstm_output_inverse,node_vec_size,activation_fn=tf.nn.tanh)
+    lstm_output_inverse = tf.contrib.layers.fully_connected(lstm_output_inverse,node_vec_size,activation_fn=None)
 
     # pos1 + index_pos1 -> result  | min dist(result , pos2)
     loss = tf.reduce_mean(tf.square(tf.subtract(node_vec_seq_split[1:],lstm_output[:-1]))) + tf.reduce_mean(tf.square(tf.subtract(node_vec_seq_split_inverse[1:],lstm_output_inverse[:-1])))

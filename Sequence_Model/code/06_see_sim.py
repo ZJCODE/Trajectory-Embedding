@@ -40,10 +40,14 @@ trajectorys = data.trajectory
 '''
 
 
+'''
+for i in np.random.choice(range(1000),10):
+    plot_trajectory(eval(trajectorys[i]))
+'''
 
 
 sim_base_f = open('../data/trajectory_sim_result_baseline_node_vec_size_32_top_5','r')
-sim_embedding_f = open('../data/trajectory_sim_result_time_step_size_10_embedding_size_32_learning_rate_0.01_batch_size_1024_num_train_step_20000_node_vec_size_32_combine_type_element_wise_multiply_top_5','r')
+sim_embedding_f = open('../data/trajectory_sim_result_time_step_size_10_embedding_size_32_learning_rate_0.01_batch_size_512_num_train_step_200000_node_vec_size_32_combine_type_concat_top_5','r')
 
 def deal_sim_line(line):
     split_line = line.strip().split('\t')
